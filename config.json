@@ -1,0 +1,19 @@
+{
+    "search_queries": [
+        "$BTC long -filter:retweets",
+        "$BTC short -filter:retweets"
+    ],
+    "save_directory": "queries/",
+    "search_kwargs": [
+        {
+            "lang": "en",
+            "result_type": "popular"
+        },
+        {
+            "lang": "en",
+            "result_type": "mixed"
+        }
+    ],
+    "granularity": 5,
+    "go_back_until": 3
+}
