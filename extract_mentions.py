@@ -61,7 +61,7 @@ def search_tweets(
     ).items(1)
     list_of_tweets = list(newest_tweet)
     if len(list_of_tweets) == 0:
-        logging.info(f"Did not find any tweets.")
+        logging.warning(f"Did not find any tweets.")
         return
     newest_tweet = list_of_tweets[0]
     now = newest_tweet.created_at
@@ -88,7 +88,7 @@ def search_tweets(
                 count += granularity
                 searching_timeframe = False
                 if query_exists(now - n_inc * time_frame, search_query, save_dir):
-                    logging.info(
+                    logging.warning(
                         f"file already exists for query {search_query} and time {(now - n_inc * time_frame).strftime('%m%d%Y_%H00')}."
                     )
                 else:
