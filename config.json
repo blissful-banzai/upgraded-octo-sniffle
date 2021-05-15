@@ -7,13 +7,13 @@
     "search_kwargs": [
         {
             "lang": "en",
-            "result_type": "popular"
+            "result_type": "recent"
         },
         {
             "lang": "en",
-            "result_type": "mixed"
+            "result_type": "recent"
         }
     ],
     "granularity": 5,
-    "go_back_until": 3
+    "go_back_until": 2
 }

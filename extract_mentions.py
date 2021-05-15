@@ -1,7 +1,9 @@
 # %%
 import json
 import datetime
+import numpy as np
 import tweepy as tw
+import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt
 import logging
@@ -103,6 +105,30 @@ def search_tweets(
     return count, now
 
 
+def plot_queries(list_of_queries, save_dir):
+
+    for query in list_of_queries:
+        dates = []
+        counts = []
+        results_directory = Path(save_dir) / Path(query)
+        for result in results_directory.rglob("*.txt"):
+            date = "".join(result.name.split("_")[0:2])
+            date = datetime.datetime.strptime(date, "%m%d%Y%H00")
+            count = np.loadtxt(result)
+
+            dates.append(date)
+            counts.append(count)
+        df = pd.DataFrame({"query": counts, "time": dates})
+        plt.plot(df["time"], df["query"], label=query)
+
+    plt.xlabel("time")
+    plt.ylabel("counts")
+    plt.grid()
+    plt.legend()
+    plt.savefig(Path(save_dir) / Path("query_timeline.png"))
+    plt.close()
+
+
 if __name__ == "__main__":
 
     auth = tw.OAuthHandler(consumer_key, consumer_secret_key)
@@ -119,5 +145,8 @@ if __name__ == "__main__":
             query,
             granularity=config["granularity"],
             go_back_until=config["go_back_until"],
+            save_dir=config["save_directory"],
             search_kwargs=search_kwargs,
         )
+
+    plot_queries(config["search_queries"], config["save_directory"])
