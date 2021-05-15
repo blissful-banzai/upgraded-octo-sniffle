@@ -2,6 +2,7 @@
 import datetime
 import tweepy as tw
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 # %%
 consumer_key = "bJGqgOc9f8aiSKmUnehRRM8Ed"
@@ -11,7 +12,33 @@ access_token_secret = "vYROIptwYXOgZGVwn7KEDW2AdKtm0GuENMpslcluGx899"
 # %%
 
 
-def search_tweets(search_query, time_frame=datetime.timedelta(hours=1), granularity=10):
+def save_query(timepoint, count, search_query, save_dir):
+    date_str = timepoint.strftime("%m%d%Y_%H00")
+    # Save if it has not been saved before
+    results_path = Path(save_dir)
+    filename = Path(f"{date_str}_query_{search_query}.txt")
+    file_path = results_path / filename
+    results_path.mkdir(parents=True, exist_ok=True)
+    with open(str(file_path), "w") as f:
+        f.write(f"{count}")
+
+
+def query_exists(timepoint, search_query, save_dir):
+    date_str = timepoint.strftime("%m%d%Y_%H00")
+    # Save if it has not been saved before
+    results_path = Path(save_dir)
+    filename = Path(f"{date_str}_query_{search_query}.txt")
+    file_path = results_path / filename
+    return file_path.exists()
+
+
+def search_tweets(
+    search_query,
+    time_frame=datetime.timedelta(hours=1),
+    granularity=10,
+    go_back_until=datetime.timedelta(days=6),
+    save_dir="queries",
+):
     """
     This function queries twitter and counts the number of tweets in a specific time interval
     relative to now. There seems to be always a 2 hour shift, but I guess that is not problematic
@@ -30,19 +57,31 @@ def search_tweets(search_query, time_frame=datetime.timedelta(hours=1), granular
     max_id = newest_tweet.id
     count = 0
     searching_timeframe = True
-    while searching_timeframe:
-        found_tweets = tw.Cursor(
-            api.search,
-            q=search_query,
-            lang="en",
-            max_id=max_id,
-        ).items(granularity)
-        last_tweet = list(found_tweets)[-1]
-        max_id = last_tweet.id
-        if last_tweet.created_at < now - time_frame:
-            searching_timeframe = False
-        else:
-            count += granularity
+    searching_history = True
+    n_inc = 1
+    while searching_history == True:
+        while searching_timeframe:
+            found_tweets = tw.Cursor(
+                api.search,
+                q=search_query,
+                lang="en",
+                max_id=max_id,
+            ).items(granularity)
+            last_tweet = list(found_tweets)[-1]
+            max_id = last_tweet.id
+            if last_tweet.created_at < now - n_inc * time_frame:
+                count += granularity
+                searching_timeframe = False
+                n_inc += 1
+                if query_exists(now - n_inc * time_frame, search_query, save_dir):
+                    searching_timeframe = False
+                else:
+                    save_query(now - n_inc * time_frame, count, search_query, save_dir)
+            else:
+                count += granularity
+        if last_tweet.created_at <= now - go_back_until:
+            searching_history = False
+
     return count, now
 
 
@@ -53,20 +92,3 @@ if __name__ == "__main__":
     api = tw.API(auth, wait_on_rate_limit=True)
 
     # Get the counts
-    count_long, latest_long = search_tweets("$BTC Long")
-    count_short, latest_short = search_tweets("$BTC Short")
-    date_str = latest_long.strftime("%m%d%Y_%H00")
-
-    # Save if it has not been saved before
-    results_path = Path(f"queries/")
-    filename = Path(f"{date_str}_query.txt")
-    file_path = results_path / filename
-
-    if file_path.exists():
-        print(
-            f"already collected data for {latest_long.strftime('%m-%d-%Y at %H:00')}, skipping save."
-        )
-    else:
-        results_path.mkdir(parents=True, exist_ok=True)
-        with open(str(file_path), "w") as f:
-            f.write(f"{count_long}, {count_short}")
