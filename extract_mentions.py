@@ -6,6 +6,7 @@ import tweepy as tw
 import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -119,8 +120,12 @@ def plot_queries(list_of_queries, save_dir):
             dates.append(date)
             counts.append(count)
         df = pd.DataFrame({"query": counts, "time": dates})
-        plt.plot(df["time"], df["query"], label=query)
-
+        df.sort_values("time", ascending=True, inplace=True)
+        plt.plot(df["time"], df["query"], "-o", label=query)
+    ax = plt.gca()
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d-%H:00"))
+    fig = plt.gcf()
+    fig.autofmt_xdate()
     plt.xlabel("time")
     plt.ylabel("counts")
     plt.grid()
