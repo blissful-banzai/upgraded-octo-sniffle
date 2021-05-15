@@ -15,5 +15,5 @@
         }
     ],
     "granularity": 5,
-    "go_back_until": 2
+    "go_back_until": 10
 }
